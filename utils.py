@@ -1,3 +1,4 @@
+import warnings
 from matplotlib import transforms
 import lasso.dyna as ld
 import numpy as np
@@ -34,6 +35,8 @@ class Example2D(object):
             self.fy = bo.read('nodfor','y_force')
             self.ids= bo.read('nodout','ids')
             self.t  = bo.read('nodout','time')
+            self.peps = (bo.read('eloutdet','nodavg','upper_yield') + 
+                         bo.read('eloutdet','nodavg','lower_yield'))/2
         except Exception as e:
             raise RuntimeError(f"There was an error loading binary data from {fprefix}", e)
 
@@ -54,8 +57,12 @@ class Example2D(object):
         self.fx = self.ff[:,:self.ff.shape[1]//2]
         self.fy = self.ff[:,self.ff.shape[1]//2:]
         self.fa = self.split_applied_force()
+        
         self.mm = np.hstack([self.m, self.m])
         self.M  = np.diag(self.mm)
+
+        self.fint = self.fa-self.mm*self.aa
+        self.pepspeps = np.hstack([self.peps, self.peps])
 
     def split_applied_force(self):
         applied_list_ids = [1405, 1443, 1481, 1519, 1557, 1595, 1633, 1671, 1709, 1747,
@@ -83,9 +90,9 @@ class Example2D(object):
 
         return ratios
 
-    def reduce_components(self, n_components, random_state=42, mass_correction=False):
+    def reduce_components(self, n_components, random_state=42, mass_correction=False, decomposable="self.dd"):
         self.pod = skld.PCA(n_components=n_components,svd_solver='randomized',random_state=random_state)
-        self.pod.fit(self.dd)
+        self.pod.fit(eval(decomposable))
         self.V = self.pod.components_.T
         self.Mr = self.V.T @ self.M @ self.V
         
@@ -100,9 +107,9 @@ class Example2D(object):
         self.ar = transform(self.aa)
         self.fr = transform(self.ff)
         self.far = transform(self.fa)
-
         #self.fint_r = transform(self.ff-self.mm*self.aa)
-        self.fint_r = transform(self.fa-self.mm*self.aa)
+        self.fint_r = transform(self.fint)
+        self.peps_r = transform(self.pepspeps)
 
 
     def transform(self, x):
