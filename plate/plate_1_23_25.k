@@ -3,7 +3,7 @@ $# Created on Mar-24-2022 (12:50:57)
 *KEYWORD
 *PARAMETER
 $#prmr1      val1     prmr2      val2     prmr3      val3     prmr4      val4
-RTHK1     2.0       RTHK2     2.0       IMAT        1                                          
+RTHK1     2.3       RTHK2     2.5       IMAT        1                                          
 *TITLE
 $#                                                                         title
 LS-DYNA keyword deck by LS-PrePost
